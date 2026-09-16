@@ -3,6 +3,7 @@ import { applyEffects } from "./effectApi";
 import { evalPrerequisite } from "./eventEngine";
 import { clamp01 } from "./mathUtils";
 import { simulationConfig } from "../config";
+import { yearStream } from "../seed";
 
 function isPolicyEligible(state: GameState, policy: PolicyDefinition): boolean {
   if (policy.id === "NO_ACTION") return true;
@@ -16,6 +17,12 @@ function isPolicyEligible(state: GameState, policy: PolicyDefinition): boolean {
  * スコア上位を単純に並べると、同じカテゴリの政策(例: 普及系が3つ)が並んでしまい、
  * 見た目上どれも同じ意味に見えて選ぶ意味が薄れる。カテゴリが異なる代表を優先することで、
  * 提示される選択肢の幅そのものを広げる（該当カテゴリが不足する場合のみ同カテゴリで埋める）。
+ *
+ * relevanceScoreの多くは信用・流動性など緩やかにしか動かない状態変数の単純な関数のため、
+ * 何もしなければ同じ政策が何ターンも「最有力」であり続け、選択肢が固定化してしまう
+ * （実測で同一4択が4ターン連続、という状態を確認した）。年ごとの決定的な揺らぎを加えて
+ * 僅差の政策の間で毎ターン勝者が入れ替わるようにする(masterSeed由来のため再現性は保たれる。
+ * 明確にスコアが高い政策まで揺らぎで覆ることはない程度の振幅に留める)。
  */
 export function getAvailablePolicyChoices(
   state: GameState,
@@ -24,7 +31,10 @@ export function getAvailablePolicyChoices(
 ): PolicyDefinition[] {
   const noAction = allPolicies.find((p) => p.id === "NO_ACTION");
   const eligible = allPolicies.filter((p) => p.id !== "NO_ACTION" && isPolicyEligible(state, p));
-  const scored = eligible.map((p) => ({ p, score: p.relevanceScore(state) })).sort((a, b) => b.score - a.score);
+  const jitterRng = yearStream(state.masterSeed, state.currentYear, "policyChoiceJitter");
+  const scored = eligible
+    .map((p) => ({ p, score: p.relevanceScore(state) + jitterRng.range(-0.22, 0.22) }))
+    .sort((a, b) => b.score - a.score);
 
   const slotsNeeded = Math.max(0, maxChoices - 1);
   const picks: PolicyDefinition[] = [];
