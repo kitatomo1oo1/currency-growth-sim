@@ -1,5 +1,6 @@
 import type { GameState } from "../../core/types";
 import { countryTemplates } from "../../core/data/countries";
+import CoinAvatar from "../components/CoinAvatar";
 
 interface Props {
   state: GameState;
@@ -9,11 +10,17 @@ interface Props {
 export default function BirthScreen({ state, onAdvance }: Props) {
   const { currencyDesign, currency, startYear } = state;
   const country = countryTemplates[currencyDesign.homeCountryId];
+  const trustAvg =
+    (currency.issuerTrust + currency.technicalTrust + currency.monetaryTrust + currency.marketTrust + currency.institutionalTrust) /
+    5;
 
   return (
     <div className="screen" style={{ justifyContent: "center" }}>
       <div className="center-col">
-        <span className="badge">誕生</span>
+        <CoinAvatar name={currencyDesign.name} holders={currency.holders} trust={trustAvg} lifecycle={currency.lifecycle} size={160} />
+        <span className="badge" style={{ marginTop: 12 }}>
+          誕生
+        </span>
         <h1>{currencyDesign.name}</h1>
         <p>{startYear}年、{country?.name ?? currencyDesign.homeCountryId}で生まれました</p>
 

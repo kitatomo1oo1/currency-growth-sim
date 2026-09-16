@@ -9,6 +9,7 @@ import {
   supplyLabels,
   useCaseLabels,
 } from "../labels";
+import CoinAvatar from "../components/CoinAvatar";
 
 interface Props {
   onComplete: (design: CurrencyDesign) => void;
@@ -77,6 +78,12 @@ export default function CreateCurrencyScreen({ onComplete, onBack }: Props) {
           <div key={i} className={`dot ${i <= step ? "done" : ""}`} />
         ))}
       </div>
+
+      {name.trim().length > 0 && step > 0 && (
+        <div className="center-col" style={{ marginBottom: 8 }}>
+          <CoinAvatar name={name.trim()} holders={0} trust={0.5} lifecycle="ACTIVE" size={64} />
+        </div>
+      )}
 
       {step === 0 && (
         <div className="section">

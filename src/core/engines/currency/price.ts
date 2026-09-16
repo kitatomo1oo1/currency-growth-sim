@@ -85,16 +85,29 @@ export function updateMarketValue(state: GameState): MarketValueResult {
   // volatilityは実現リターンの絶対値を指数平滑して更新（Normalized Indexのため0..1に収める）
   c.volatility = clamp(c.volatility * 0.6 + Math.min(1, Math.abs(realizedReturn)) * 0.4, 0, 1);
 
+  const fundamentalGapValue = cfg.weights.fundamentalGap * priceGapRatio;
+  const momentumValue = cfg.weights.momentum * c.momentum;
+  const speculativeShareValue = cfg.weights.speculativeShare * (speculativeShare - 0.3);
+  const sellingPressureValue = -cfg.weights.sellingPressure * c.sellingPressure;
+
   return {
     contributions: [
-      { key: "fundamentalGap", label: "実需とファンダメンタルズの乖離", value: cfg.weights.fundamentalGap * priceGapRatio },
-      { key: "momentum", label: "投機モメンタム", value: cfg.weights.momentum * c.momentum },
+      {
+        key: "fundamentalGap",
+        label: fundamentalGapValue >= 0 ? "実際の使われ方より高く買われている" : "実際の使われ方より安く見られている",
+        value: fundamentalGapValue,
+      },
+      {
+        key: "momentum",
+        label: momentumValue >= 0 ? "値上がりの勢いがついている" : "値下がりの勢いがついている",
+        value: momentumValue,
+      },
       {
         key: "speculativeShare",
-        label: "投機需要の割合",
-        value: cfg.weights.speculativeShare * (speculativeShare - 0.3),
+        label: speculativeShareValue >= 0 ? "値上がり狙いの取引が増えている" : "値上がり狙いの取引が落ち着いている",
+        value: speculativeShareValue,
       },
-      { key: "sellingPressure", label: "売却圧力", value: -cfg.weights.sellingPressure * c.sellingPressure },
+      { key: "sellingPressure", label: "手放したい人が増えている", value: sellingPressureValue },
     ],
   };
 }

@@ -3,6 +3,7 @@ import type { GameState } from "../../core/types";
 import { buildFinalSummary, classifyCurrencyType, extractTimeline } from "../../core/engines/historyGenerator";
 import { lifecycleLabels } from "../labels";
 import { ALL_LEARNING_TOPICS } from "../../core/data/learningTopics";
+import CoinAvatar from "../components/CoinAvatar";
 
 interface Props {
   state: GameState;
@@ -15,11 +16,16 @@ export default function FinalHistoryScreen({ state, onReplaySameDesign, onNewCur
   const summary = useMemo(() => buildFinalSummary(state), [state]);
   const types = useMemo(() => classifyCurrencyType(state), [state]);
   const timeline = useMemo(() => extractTimeline(state), [state]);
+  const c = state.currency;
+  const trustAvg = (c.issuerTrust + c.technicalTrust + c.monetaryTrust + c.marketTrust + c.institutionalTrust) / 5;
 
   return (
     <div className="screen screen-tight">
       <div className="section center-col">
-        <span className="badge">{summary.lifespanYears}年の歴史</span>
+        <CoinAvatar name={state.currencyDesign.name} holders={c.holders} trust={trustAvg} lifecycle={c.lifecycle} size={140} />
+        <span className="badge" style={{ marginTop: 10 }}>
+          {summary.lifespanYears}年の歴史
+        </span>
         <h1 style={{ fontSize: 22 }}>{state.currencyDesign.name}の50年史</h1>
         <div className="scroll-x-tags">
           {types.map((t) => (

@@ -315,3 +315,48 @@ p {
   gap: 6px;
   margin-top: 4px;
 }
+
+@keyframes coin-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+.hero-stat {
+  text-align: center;
+  margin: 4px 0 18px;
+}
+
+.hero-stat .hero-number {
+  font-size: 46px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 4px 0;
+}
+
+.hero-stat .hero-caption {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.situation-banner {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent-2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
