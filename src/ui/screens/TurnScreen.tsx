@@ -3,7 +3,7 @@ import type { GameState, LedgerDriver, LedgerEventEntry, YearRecord } from "../.
 import { countryTemplates } from "../../core/data/countries";
 import { computeExchangeRate } from "../../core/engines/currency/fx";
 import { getPolicyChoices } from "../../game/gameController";
-import { lifecycleLabels, policyCategoryHints, regimeLabels } from "../labels";
+import { lifecycleLabels, regimeLabels } from "../labels";
 import CoinAvatar from "../components/CoinAvatar";
 
 interface Props {
@@ -398,7 +398,7 @@ export default function TurnScreen({ state, records, gameOver, policyChosenLabel
             >
               <span className="title">{p.label}</span>
               <span className="desc">{p.description}</span>
-              <span className="hint-tag">{policyCategoryHints[p.category]}</span>
+              <span className="hint-tag">{p.hint}</span>
             </button>
           ))}
         </div>

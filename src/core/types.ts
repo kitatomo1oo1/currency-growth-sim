@@ -276,6 +276,8 @@ export interface PolicyDefinition {
   buildDelayedEffects?: (currentYear: number) => Array<Omit<DelayedEffectRecord, "id" | "createdYear">>;
   /** 現在の状態にどれだけ状況的関連性があるか(0..1)。UIの候補選定(最大4択)にのみ使用し、正解/おすすめの意味は持たせない。 */
   relevanceScore: (state: GameState) => number;
+  /** その政策固有の効果を一言で表すタグ。同じカテゴリの政策が並んでも区別できるようにする。 */
+  hint: string;
 }
 
 // --- Explainability Ledger (§40) ---

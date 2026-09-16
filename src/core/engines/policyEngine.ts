@@ -11,7 +11,12 @@ function isPolicyEligible(state: GameState, policy: PolicyDefinition): boolean {
   return state.currency.governanceCapacity >= policy.cost;
 }
 
-/** §36: 24政策全部ではなく状況に応じ最大4択を提示する。正解/おすすめの意味は持たせない。 */
+/**
+ * §36: 24政策全部ではなく状況に応じ最大4択を提示する。正解/おすすめの意味は持たせない。
+ * スコア上位を単純に並べると、同じカテゴリの政策(例: 普及系が3つ)が並んでしまい、
+ * 見た目上どれも同じ意味に見えて選ぶ意味が薄れる。カテゴリが異なる代表を優先することで、
+ * 提示される選択肢の幅そのものを広げる（該当カテゴリが不足する場合のみ同カテゴリで埋める）。
+ */
 export function getAvailablePolicyChoices(
   state: GameState,
   allPolicies: PolicyDefinition[],
@@ -19,10 +24,29 @@ export function getAvailablePolicyChoices(
 ): PolicyDefinition[] {
   const noAction = allPolicies.find((p) => p.id === "NO_ACTION");
   const eligible = allPolicies.filter((p) => p.id !== "NO_ACTION" && isPolicyEligible(state, p));
-  const scored = eligible
-    .map((p) => ({ p, score: p.relevanceScore(state) }))
-    .sort((a, b) => b.score - a.score);
-  const picks = scored.slice(0, Math.max(0, maxChoices - 1)).map((s) => s.p);
+  const scored = eligible.map((p) => ({ p, score: p.relevanceScore(state) })).sort((a, b) => b.score - a.score);
+
+  const slotsNeeded = Math.max(0, maxChoices - 1);
+  const picks: PolicyDefinition[] = [];
+  const usedCategories = new Set<string>();
+
+  // 1巡目: カテゴリごとの最高スコアだけを、カテゴリの重複なく拾う
+  for (const { p } of scored) {
+    if (picks.length >= slotsNeeded) break;
+    if (usedCategories.has(p.category)) continue;
+    picks.push(p);
+    usedCategories.add(p.category);
+  }
+
+  // カテゴリの種類が足りない場合のみ、残り枠をスコア順で埋める(同カテゴリの重複を許容)
+  if (picks.length < slotsNeeded) {
+    for (const { p } of scored) {
+      if (picks.length >= slotsNeeded) break;
+      if (picks.includes(p)) continue;
+      picks.push(p);
+    }
+  }
+
   return noAction ? [noAction, ...picks] : picks;
 }
 
