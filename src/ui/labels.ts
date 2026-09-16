@@ -1,4 +1,14 @@
-import type { Issuer, SupplyRule, ExchangeRule, PriceRule, LaunchScale, UseCase, LifecycleState, MarketRegime } from "../core/types";
+import type {
+  Issuer,
+  SupplyRule,
+  ExchangeRule,
+  PriceRule,
+  LaunchScale,
+  UseCase,
+  LifecycleState,
+  MarketRegime,
+  PolicyCategory,
+} from "../core/types";
 import { countryTemplates } from "../core/data/countries";
 
 export const issuerLabels: Record<Issuer, { title: string; desc: string; hint: string }> = {
@@ -65,3 +75,13 @@ export const regimeLabels: Record<MarketRegime, string> = {
 };
 
 export const countryOptions = Object.values(countryTemplates).map((c) => ({ id: c.id, name: c.name }));
+
+export const policyCategoryHints: Record<PolicyCategory, string> = {
+  SUPPLY: "発行量を動かす",
+  ADOPTION: "利用を広げる",
+  TRUST: "信用を高める",
+  MARKET: "市場を整える",
+  INTERNATIONAL: "海外に広げる",
+  CRISIS: "危機に備える",
+  NONE: "様子を見る",
+};

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { CurrencyDesign, GameState, YearRecord } from "./core/types";
+import type { CurrencyDesign, GameState, LedgerDriver, YearRecord } from "./core/types";
 import {
   startNewGame,
   loadContinuedGame,
@@ -22,6 +22,8 @@ export default function App() {
   const [lastRecords, setLastRecords] = useState<YearRecord[]>([]);
   const [canContinue, setCanContinue] = useState(false);
   const [turnEnded, setTurnEnded] = useState(false);
+  const [policyChosenLabel, setPolicyChosenLabel] = useState("");
+  const [policyEffectDrivers, setPolicyEffectDrivers] = useState<LedgerDriver[]>([]);
 
   useEffect(() => {
     setCanContinue(hasContinuableGame());
@@ -39,6 +41,8 @@ export default function App() {
     }
     setGameState(loaded);
     setLastRecords(loaded.history.slice(-5));
+    setPolicyChosenLabel("");
+    setPolicyEffectDrivers([]);
     setScreen(isGameOver(loaded) ? "final" : loaded.history.length === 0 ? "birth" : "turn");
   }
 
@@ -51,18 +55,28 @@ export default function App() {
 
   function handleFirstAdvance() {
     if (!gameState) return;
-    const { state, yearRecords, gameOver } = advanceTurn(gameState, "NO_ACTION");
+    const { state, yearRecords, gameOver, policyChosenLabel: label, policyEffectDrivers: drivers } = advanceTurn(
+      gameState,
+      "NO_ACTION"
+    );
     setGameState({ ...state });
     setLastRecords(yearRecords);
+    setPolicyChosenLabel(label);
+    setPolicyEffectDrivers(drivers);
     setTurnEnded(gameOver);
     setScreen("turn");
   }
 
   function handleAdvanceTurn(policyId: string) {
     if (!gameState) return;
-    const { state, yearRecords, gameOver } = advanceTurn(gameState, policyId);
+    const { state, yearRecords, gameOver, policyChosenLabel: label, policyEffectDrivers: drivers } = advanceTurn(
+      gameState,
+      policyId
+    );
     setGameState({ ...state });
     setLastRecords(yearRecords);
+    setPolicyChosenLabel(label);
+    setPolicyEffectDrivers(drivers);
     setTurnEnded(gameOver);
     setScreen("turn");
   }
@@ -96,7 +110,15 @@ export default function App() {
       {screen === "create" && <CreateCurrencyScreen onComplete={handleCurrencyCreated} onBack={handleGoHome} />}
       {screen === "birth" && gameState && <BirthScreen state={gameState} onAdvance={handleFirstAdvance} />}
       {screen === "turn" && gameState && (
-        <TurnScreen state={gameState} records={lastRecords} gameOver={turnEnded} onAdvance={handleAdvanceTurn} onFinish={handleFinish} />
+        <TurnScreen
+          state={gameState}
+          records={lastRecords}
+          gameOver={turnEnded}
+          policyChosenLabel={policyChosenLabel}
+          policyEffectDrivers={policyEffectDrivers}
+          onAdvance={handleAdvanceTurn}
+          onFinish={handleFinish}
+        />
       )}
       {screen === "final" && gameState && (
         <FinalHistoryScreen

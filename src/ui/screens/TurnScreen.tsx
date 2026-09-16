@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import type { GameState, LedgerEventEntry, YearRecord } from "../../core/types";
+import type { GameState, LedgerDriver, LedgerEventEntry, YearRecord } from "../../core/types";
 import { countryTemplates } from "../../core/data/countries";
 import { computeExchangeRate } from "../../core/engines/currency/fx";
 import { getPolicyChoices } from "../../game/gameController";
-import { lifecycleLabels, regimeLabels } from "../labels";
+import { lifecycleLabels, policyCategoryHints, regimeLabels } from "../labels";
 import CoinAvatar from "../components/CoinAvatar";
 
 interface Props {
   state: GameState;
   records: YearRecord[];
   gameOver: boolean;
+  policyChosenLabel: string;
+  policyEffectDrivers: LedgerDriver[];
   onAdvance: (policyId: string) => void;
   onFinish: () => void;
 }
@@ -46,19 +48,68 @@ function describeYearBeat(r: YearRecord): { headline: string; sub?: string } {
   return { headline: "静かな1年でした" };
 }
 
-export default function TurnScreen({ state, records, gameOver, onAdvance, onFinish }: Props) {
+/** 常時見える「今の状態」。目標(通貨を存続させる)に対して今どうなのかを、毎ターン思い出せるようにする。 */
+function assessHealth(state: GameState): { level: "安定" | "要注意" | "危険"; reason: string; tone: "ok" | "warn" | "danger" } {
+  const c = state.currency;
+  const deadRisk = (state.flags["_deadRisk"] as number) ?? 0;
+  if (c.lifecycle === "DEAD") return { level: "危険", reason: "この通貨は、もう使われていません。", tone: "danger" };
+  if (deadRisk > 0.5 || c.lifecycle === "STRESSED")
+    return { level: "危険", reason: "このままでは、遠くないうちに使われなくなります。", tone: "danger" };
+  if (deadRisk > 0.1 || c.lifecycle === "DORMANT" || c.crisisPressure > 0.4 || c.awareness < 0.08)
+    return { level: "要注意", reason: "少しずつ、存在感が薄れてきています。", tone: "warn" };
+  return { level: "安定", reason: "今のところ、順調に使われています。", tone: "ok" };
+}
+
+export default function TurnScreen({ state, records, gameOver, policyChosenLabel, policyEffectDrivers, onAdvance, onFinish }: Props) {
   const [selectedPolicyId, setSelectedPolicyId] = useState("NO_ACTION");
-  const [revealIndex, setRevealIndex] = useState(0);
+  const [revealIndex, setRevealIndex] = useState(-1);
   const choices = useMemo(() => getPolicyChoices(state), [state]);
 
   useEffect(() => {
-    setRevealIndex(0);
+    setRevealIndex(-1);
   }, [records]);
 
   if (records.length === 0) {
     return (
       <div className="screen" style={{ justifyContent: "center" }}>
         <p>次の5年に進めます…</p>
+      </div>
+    );
+  }
+
+  // Step0: 世界の出来事と混ざる前に、「あなたの判断そのものが直接何をしたか」だけを単独で見せる。
+  // 5年分のランダムイベントに埋もれてから「これが原因です」と言われても実感が持てない、
+  // という指摘への対応。政策の効果は、世界が動き出す前に、まず単体で提示する。
+  if (revealIndex === -1) {
+    const isNoAction = policyEffectDrivers.length === 0;
+    return (
+      <div className="screen" style={{ justifyContent: "center" }}>
+        <div className="center-col">
+          <span className="badge">あなたの判断</span>
+          <h1 style={{ fontSize: 22, marginTop: 10 }}>
+            {policyChosenLabel ? `「${policyChosenLabel}」を選びました` : "判断を実行しました"}
+          </h1>
+          {isNoAction ? (
+            <p>今回はあえて動かないことを選びました。この5年を動かすのは、世界の出来事だけです。</p>
+          ) : (
+            <>
+              <p>世界が動き出す前の、あなたの判断そのものの効果です。</p>
+              <div className="driver-list" style={{ width: "100%" }}>
+                {policyEffectDrivers.map((d, i) => (
+                  <div className="driver-item" key={`${d.key}-${i}`}>
+                    <span>{d.label}</span>
+                    <span>{d.direction === "up" ? "↑" : "↓"}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        <div className="bottom-bar" style={{ marginTop: "auto" }}>
+          <button className="btn btn-primary" onClick={() => setRevealIndex(0)}>
+            そして、5年が始まる
+          </button>
+        </div>
       </div>
     );
   }
@@ -126,6 +177,7 @@ export default function TurnScreen({ state, records, gameOver, onAdvance, onFini
 
   const deadRisk = (state.flags["_deadRisk"] as number) ?? 0;
   const showDeadWarning = !gameOver && deadRisk > 0.3;
+  const health = assessHealth(state);
 
   function handleAdvance() {
     onAdvance(selectedPolicyId);
@@ -137,9 +189,14 @@ export default function TurnScreen({ state, records, gameOver, onAdvance, onFini
         <CoinAvatar name={state.currencyDesign.name} holders={c.holders} trust={trustAvg} lifecycle={c.lifecycle} size={72} />
         <div>
           <span className="badge">{periodLabel}</span>
+          <span className={`badge health-${health.tone}`} style={{ marginLeft: 6 }}>
+            通貨の状態: {health.level}
+          </span>
           <h1 style={{ fontSize: 20, margin: "6px 0 0" }}>{state.currencyDesign.name}のこの5年</h1>
         </div>
       </div>
+
+      <p style={{ margin: "0 0 14px", fontSize: 13.5 }}>{health.reason}</p>
 
       {lastChosenPolicy && (
         <p style={{ margin: "0 0 14px", fontSize: 13.5 }}>
@@ -300,6 +357,7 @@ export default function TurnScreen({ state, records, gameOver, onAdvance, onFini
             >
               <span className="title">{p.label}</span>
               <span className="desc">{p.description}</span>
+              <span className="hint-tag">{policyCategoryHints[p.category]}</span>
             </button>
           ))}
         </div>

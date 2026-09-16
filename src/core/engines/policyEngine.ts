@@ -1,4 +1,4 @@
-import type { EffectInstruction, GameState, LedgerPolicyEntry, PolicyDefinition } from "../types";
+import type { EffectInstruction, GameState, LedgerDriver, LedgerPolicyEntry, PolicyDefinition } from "../types";
 import { applyEffects } from "./effectApi";
 import { evalPrerequisite } from "./eventEngine";
 import { clamp01 } from "./mathUtils";
@@ -56,6 +56,8 @@ export interface ApplyPolicyResult {
   applied: boolean;
   reason?: string;
   ledgerEntry?: LedgerPolicyEntry;
+  /** この判断が直接もたらした効果。世界の出来事と混ざる前の、選択そのものの結果。 */
+  drivers: LedgerDriver[];
 }
 
 /**
@@ -65,15 +67,15 @@ export interface ApplyPolicyResult {
  */
 export function applyPolicy(state: GameState, policyId: string, allPolicies: PolicyDefinition[]): ApplyPolicyResult {
   const policy = allPolicies.find((p) => p.id === policyId);
-  if (!policy) return { applied: false, reason: `未定義の政策IDです: ${policyId}` };
+  if (!policy) return { applied: false, reason: `未定義の政策IDです: ${policyId}`, drivers: [] };
 
   if (policy.id === "NO_ACTION") {
     state.policySequence.push({ year: state.currentYear, policyId: policy.id });
-    return { applied: true, ledgerEntry: { policyId: policy.id, label: policy.label } };
+    return { applied: true, ledgerEntry: { policyId: policy.id, label: policy.label }, drivers: [] };
   }
 
   if (!isPolicyEligible(state, policy)) {
-    return { applied: false, reason: "現在の状態では実行できません（前提条件未達または運営体制の余力不足）" };
+    return { applied: false, reason: "現在の状態では実行できません（前提条件未達または運営体制の余力不足）", drivers: [] };
   }
 
   const useCountKey = `_policyUseCount_${policy.id}`;
@@ -81,7 +83,7 @@ export function applyPolicy(state: GameState, policyId: string, allPolicies: Pol
   const diminishing = Math.pow(simulationConfig.governance.diminishingReturnFactor, useCount);
 
   const effects = policy.buildImmediateEffects().map((e) => scaleEffect(e, diminishing));
-  applyEffects(state, effects, state.currentYear);
+  const drivers = applyEffects(state, effects, state.currentYear);
 
   if (policy.buildDelayedEffects) {
     for (const de of policy.buildDelayedEffects(state.currentYear)) {
@@ -94,7 +96,7 @@ export function applyPolicy(state: GameState, policyId: string, allPolicies: Pol
   state.flags[useCountKey] = useCount + 1;
   state.policySequence.push({ year: state.currentYear, policyId: policy.id });
 
-  return { applied: true, ledgerEntry: { policyId: policy.id, label: policy.label } };
+  return { applied: true, ledgerEntry: { policyId: policy.id, label: policy.label }, drivers };
 }
 
 /** 運営体制の余力は毎年自然に回復する。 */

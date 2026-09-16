@@ -19,6 +19,11 @@ export default function HomeScreen({ canContinue, onStart, onContinue }: Props) 
           <br />
           経済の知識は必要ありません。
         </p>
+        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+          目指すのはただひとつ、<strong style={{ color: "var(--text)" }}>あなたの通貨を、誰かに使われ続けさせること</strong>。
+          <br />
+          見捨てれば、通貨は歴史の途中で終わってしまいます。
+        </p>
       </div>
 
       <div className="bottom-bar" style={{ marginTop: "auto" }}>

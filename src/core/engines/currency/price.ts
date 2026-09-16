@@ -58,10 +58,16 @@ export function updateMarketValue(state: GameState): MarketValueResult {
   const totalDemand = c.utilityDemand + c.savingDemand + c.speculativeDemand + c.foreignDemand;
   const speculativeShare = safeDiv(c.speculativeDemand, totalDemand + 1e-9);
 
+  // speculativeShareは「投機が平常時より過熱している分だけ」価格を押し上げる加点要素とする。
+  // 単純に基準値(0.3)を引き算すると、投機が全く無い(非投機的な)設計では常にこの項がマイナスになり、
+  // どの通貨も毎年構造的に下落し続けるバイアスが生まれてしまう(実測で年間下落70%/上昇30%という
+  // 明確な偏りが発生していた)。超過分のみを加点することで、この恒常的な下方圧力を取り除く。
+  const speculativeExcess = Math.max(0, speculativeShare - 0.3);
+
   const rawPressure =
     cfg.weights.fundamentalGap * priceGapRatio +
     cfg.weights.momentum * c.momentum +
-    cfg.weights.speculativeShare * (speculativeShare - 0.3) -
+    cfg.weights.speculativeShare * speculativeExcess -
     cfg.weights.sellingPressure * c.sellingPressure;
 
   const liquidityMultiplier = liquiditySensitivityMultiplier(c.liquidity);
@@ -87,7 +93,7 @@ export function updateMarketValue(state: GameState): MarketValueResult {
 
   const fundamentalGapValue = cfg.weights.fundamentalGap * priceGapRatio;
   const momentumValue = cfg.weights.momentum * c.momentum;
-  const speculativeShareValue = cfg.weights.speculativeShare * (speculativeShare - 0.3);
+  const speculativeShareValue = cfg.weights.speculativeShare * speculativeExcess;
   const sellingPressureValue = -cfg.weights.sellingPressure * c.sellingPressure;
 
   return {
@@ -104,7 +110,7 @@ export function updateMarketValue(state: GameState): MarketValueResult {
       },
       {
         key: "speculativeShare",
-        label: speculativeShareValue >= 0 ? "値上がり狙いの取引が増えている" : "値上がり狙いの取引が落ち着いている",
+        label: "値上がり狙いの取引が増えている",
         value: speculativeShareValue,
       },
       { key: "sellingPressure", label: "手放したい人が増えている", value: sellingPressureValue },

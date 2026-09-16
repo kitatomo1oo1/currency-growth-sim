@@ -4,6 +4,7 @@ import { buildFinalSummary, classifyCurrencyType, extractTimeline } from "../../
 import { lifecycleLabels } from "../labels";
 import { ALL_LEARNING_TOPICS } from "../../core/data/learningTopics";
 import CoinAvatar from "../components/CoinAvatar";
+import PriceSparkline from "../components/PriceSparkline";
 
 interface Props {
   state: GameState;
@@ -58,6 +59,13 @@ export default function FinalHistoryScreen({ state, onReplaySameDesign, onNewCur
           {timeline.length === 0 && <p>目立った出来事はありませんでした。</p>}
         </div>
       </div>
+
+      {state.history.length > 1 && (
+        <div className="card section">
+          <h3>価格の推移(50年間)</h3>
+          <PriceSparkline points={[summary.initialValue, ...state.history.map((r) => r.valueAfter)]} />
+        </div>
+      )}
 
       <div className="card section">
         <h3>最終結果</h3>

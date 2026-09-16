@@ -1,4 +1,4 @@
-import type { CurrencyDesign, GameState, LedgerPolicyEntry, PolicyDefinition, YearRecord } from "../core/types";
+import type { CurrencyDesign, GameState, LedgerDriver, LedgerPolicyEntry, PolicyDefinition, YearRecord } from "../core/types";
 import { createInitialGameState } from "../core/state/initialState";
 import { processYear } from "../core/engines/yearProcessor";
 import { allEvents } from "../core/data/events";
@@ -44,6 +44,9 @@ export interface TurnResult {
   state: GameState;
   yearRecords: YearRecord[];
   gameOver: boolean;
+  /** 選んだ政策そのものが直接もたらした効果。世界の出来事と混ざる前の結果を単独で見せるため。 */
+  policyChosenLabel: string;
+  policyEffectDrivers: LedgerDriver[];
 }
 
 /**
@@ -64,7 +67,13 @@ export function advanceTurn(state: GameState, policyId: string): TurnResult {
 
   saveGameState(state);
 
-  return { state, yearRecords, gameOver: isGameOver(state) };
+  return {
+    state,
+    yearRecords,
+    gameOver: isGameOver(state),
+    policyChosenLabel: applyResult.ledgerEntry?.label ?? "",
+    policyEffectDrivers: applyResult.drivers,
+  };
 }
 
 export function getAllPolicies(): PolicyDefinition[] {

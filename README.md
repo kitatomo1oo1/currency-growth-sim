@@ -86,7 +86,7 @@ src/
 ## 既知の制限事項
 
 - 国データは日本・アルト共和国・ノルド連合・デルタ連邦の4カ国（`src/core/data/countries.ts`
-  に追加するだけで拡張可能）。OPEN交換の設計では「世界決済型」への分布集中（約75〜80%前後）が
+  に追加するだけで拡張可能）。OPEN交換の設計では「世界決済型」への分布集中（約65〜70%前後）が
   見られ、`npm run sim`の結果を見ながら`foreignShare`関連の閾値をさらに調整する余地がある。
 - バランス（Bubble/Crash/PEG危機/Dormant/Recoveryの発生頻度など）は初版の基準Calibrationであり、
   `npm run sim`の結果を見ながら`src/core/config.ts`・イベント効果量を継続的に調整する余地がある。

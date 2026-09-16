@@ -373,6 +373,21 @@ p {
   line-height: 1.6;
 }
 
+.health-ok {
+  background: rgba(110, 231, 200, 0.14);
+  color: var(--accent);
+}
+
+.health-warn {
+  background: rgba(245, 185, 105, 0.16);
+  color: var(--warn);
+}
+
+.health-danger {
+  background: rgba(242, 120, 159, 0.16);
+  color: var(--danger);
+}
+
 .danger-banner {
   background: rgba(242, 120, 159, 0.1);
   border: 1px solid var(--danger);
