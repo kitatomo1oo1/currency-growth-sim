@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { CurrencyDesign, ExchangeRule, Issuer, LaunchScale, PriceRule, SupplyRule, UseCase } from "../../core/types";
 import {
+  countryHints,
   countryOptions,
   exchangeLabels,
   issuerLabels,
@@ -110,6 +111,7 @@ export default function CreateCurrencyScreen({ onComplete, onBack }: Props) {
               onClick={() => setHomeCountryId(c.id)}
             >
               <span className="title">{c.name}</span>
+              {countryHints[c.id] && <span className="hint-tag">{countryHints[c.id]}</span>}
             </button>
           ))}
         </div>
@@ -121,7 +123,8 @@ export default function CreateCurrencyScreen({ onComplete, onBack }: Props) {
           <p>いくつでも選べます（最大3つ）</p>
           {(Object.keys(useCaseLabels) as UseCase[]).map((uc) => (
             <button key={uc} className={`tap-card ${useCases.includes(uc) ? "selected" : ""}`} onClick={() => toggleUseCase(uc)}>
-              <span className="title">{useCaseLabels[uc]}</span>
+              <span className="title">{useCaseLabels[uc].title}</span>
+              <span className="hint-tag">{useCaseLabels[uc].hint}</span>
             </button>
           ))}
         </div>
@@ -134,6 +137,7 @@ export default function CreateCurrencyScreen({ onComplete, onBack }: Props) {
             <button key={key} className={`tap-card ${issuerType === key ? "selected" : ""}`} onClick={() => setIssuerType(key)}>
               <span className="title">{issuerLabels[key].title}</span>
               <span className="desc">{issuerLabels[key].desc}</span>
+              <span className="hint-tag">{issuerLabels[key].hint}</span>
             </button>
           ))}
         </div>
@@ -146,6 +150,7 @@ export default function CreateCurrencyScreen({ onComplete, onBack }: Props) {
             <button key={key} className={`tap-card ${supplyRule === key ? "selected" : ""}`} onClick={() => setSupplyRule(key)}>
               <span className="title">{supplyLabels[key].title}</span>
               <span className="desc">{supplyLabels[key].desc}</span>
+              <span className="hint-tag">{supplyLabels[key].hint}</span>
             </button>
           ))}
         </div>
@@ -158,6 +163,7 @@ export default function CreateCurrencyScreen({ onComplete, onBack }: Props) {
             <button key={key} className={`tap-card ${exchangeRule === key ? "selected" : ""}`} onClick={() => setExchangeRule(key)}>
               <span className="title">{exchangeLabels[key].title}</span>
               <span className="desc">{exchangeLabels[key].desc}</span>
+              <span className="hint-tag">{exchangeLabels[key].hint}</span>
             </button>
           ))}
         </div>
@@ -170,6 +176,7 @@ export default function CreateCurrencyScreen({ onComplete, onBack }: Props) {
             <button key={key} className={`tap-card ${priceRule === key ? "selected" : ""}`} onClick={() => setPriceRule(key)}>
               <span className="title">{priceLabels[key].title}</span>
               <span className="desc">{priceLabels[key].desc}</span>
+              <span className="hint-tag">{priceLabels[key].hint}</span>
             </button>
           ))}
         </div>
@@ -182,6 +189,7 @@ export default function CreateCurrencyScreen({ onComplete, onBack }: Props) {
             <button key={key} className={`tap-card ${launchScale === key ? "selected" : ""}`} onClick={() => setLaunchScale(key)}>
               <span className="title">{launchLabels[key].title}</span>
               <span className="desc">{launchLabels[key].desc}</span>
+              <span className="hint-tag">{launchLabels[key].hint}</span>
             </button>
           ))}
         </div>
