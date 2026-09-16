@@ -48,6 +48,33 @@ function describeYearBeat(r: YearRecord): { headline: string; sub?: string } {
   return { headline: "静かな1年でした" };
 }
 
+/**
+ * その年の見出しニュース(highest-severity event)と、価格を実際に動かした要因は別物であることがある
+ * (例: 地域普及という良いニュースがあっても、他の下落要因の方が大きければ価格は下がる)。
+ * 見出しだけを価格変化の隣に出すと「なぜこの良いニュースで価格が下がるのか」と矛盾に見えるため、
+ * 実際にその年の価格変化を説明するExplainability Ledgerの主要因を、見出しとは別に明示する。
+ */
+/**
+ * 1つのニュース→1つの結果、と単純化すると不正確になる(現実には複数の要因が積み重なって
+ * 価格が動く)ため、上位2〜3件を大きさ順に並べる。ただし実際の価格変化の向きと逆方向の要因まで
+ * 混ぜると「↑の要因ばかりなのに価格は↓」という新たな矛盾が生まれるため、価格が実際に動いた
+ * 方向と同じ向きの要因だけに絞る(同じ理由が複数箇所から効いていれば合算して1件にまとめる)。
+ */
+function pickTopDrivers(r: YearRecord, max = 3): Array<{ label: string; direction: "up" | "down" }> {
+  const rose = r.valueAfter >= r.valueBefore;
+  const pool = rose ? r.positiveDrivers : r.negativeDrivers;
+
+  const merged = new Map<string, number>();
+  for (const d of pool) {
+    merged.set(d.label, (merged.get(d.label) ?? 0) + d.magnitude);
+  }
+
+  return Array.from(merged.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, max)
+    .map(([label]) => ({ label, direction: (rose ? "up" : "down") as "up" | "down" }));
+}
+
 /** 常時見える「今の状態」。目標(通貨を存続させる)に対して今どうなのかを、毎ターン思い出せるようにする。 */
 function assessHealth(state: GameState): { level: "安定" | "要注意" | "危険"; reason: string; tone: "ok" | "warn" | "danger" } {
   const c = state.currency;
@@ -119,6 +146,7 @@ export default function TurnScreen({ state, records, gameOver, policyChosenLabel
   if (revealIndex < records.length) {
     const r = records[revealIndex];
     const beat = describeYearBeat(r);
+    const topDrivers = pickTopDrivers(r);
     const yearChangePct = ((r.valueAfter - r.valueBefore) / r.valueBefore) * 100;
     const isLast = revealIndex === records.length - 1;
     return (
@@ -141,6 +169,19 @@ export default function TurnScreen({ state, records, gameOver, policyChosenLabel
             </div>
             <div className="hero-caption">この年の価格変化</div>
           </div>
+          {topDrivers.length > 0 && (
+            <div style={{ width: "100%", textAlign: "left" }}>
+              <h3 style={{ marginBottom: 6 }}>価格が動いた要因</h3>
+              <div className="driver-list">
+                {topDrivers.map((d, i) => (
+                  <div className="driver-item" key={`${d.label}-${i}`}>
+                    <span>{d.label}</span>
+                    <span>{d.direction === "up" ? "↑" : "↓"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div className="bottom-bar" style={{ marginTop: "auto" }}>
           <button className="btn btn-primary" onClick={() => setRevealIndex((i) => i + 1)}>
