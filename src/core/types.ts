@@ -305,6 +305,7 @@ export interface LedgerPolicyEntry {
 export interface LedgerDelayedEntry {
   sourceId: string;
   sourceLabel: string;
+  sourceType: "EVENT" | "POLICY";
   createdYear: number;
 }
 

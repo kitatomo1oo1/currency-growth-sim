@@ -265,11 +265,15 @@ export default function TurnScreen({ state, records, gameOver, policyChosenLabel
 
       {maturedEffects.length > 0 && (
         <div className="card section" style={{ borderColor: "var(--accent-2)" }}>
-          <h3>過去の判断が、今になって効いてきました</h3>
+          <h3>過去の出来事が、今になって効いてきました</h3>
           {maturedEffects.map((m, i) => (
             <div className="news-item" key={`${m.sourceId}-${i}`}>
               <div className="headline">{m.year}年: {m.sourceLabel}の影響が出ました</div>
-              <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{m.createdYear}年に下した判断の結果です</div>
+              <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+                {m.sourceType === "POLICY"
+                  ? `${m.createdYear}年に下した判断の結果です`
+                  : `${m.createdYear}年に起きたことの、遅れて来た影響です`}
+              </div>
             </div>
           ))}
         </div>

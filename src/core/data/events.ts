@@ -1,4 +1,4 @@
-import type { EffectInstruction, EventCategory, EventDefinition, EventPrerequisite } from "../types";
+import type { DelayedEffectRecord, EffectInstruction, EventCategory, EventDefinition, EventPrerequisite } from "../types";
 import {
   awareness,
   divisibility,
@@ -28,6 +28,8 @@ interface EventSpec {
   topics?: string[];
   text: string;
   effects: (s: number) => EffectInstruction[];
+  /** 数年後に効いてくる遅延効果の種。大きな出来事に「その後の展開」を持たせるために使う(§34)。 */
+  delayed?: (s: number, currentYear: number) => Array<Omit<DelayedEffectRecord, "id" | "createdYear">>;
 }
 
 function defineEvent(spec: EventSpec): EventDefinition {
@@ -45,6 +47,7 @@ function defineEvent(spec: EventSpec): EventDefinition {
     learningTopics: spec.topics ?? [],
     textTemplate: spec.text,
     buildImmediateEffects: spec.effects,
+    buildDelayedEffects: spec.delayed,
   };
 }
 
@@ -638,7 +641,24 @@ const worldCrisisEvents: EventDefinition[] = [
     conflictTags: ["WORLD_DOWN"],
     text: "世界的な金融危機が発生しました",
     topics: ["暴落"],
-    effects: (s) => [trust("marketTrust", -0.06 * s), liquidity(-0.08 * s), trustScar(0.05 * s)],
+    // ファンダメンタルズ級の大きな出来事として、即座の打撃を強くする一方、
+    // 数年後に「立て直り」を用意しておく。危機が起きて終わりではなく、そこから
+    // 回復していく展開そのものを、遅延効果(§34)を通してユーザーが目撃できるようにする。
+    effects: (s) => [
+      trust("marketTrust", -0.14 * s),
+      trust("institutionalTrust", -0.06 * s),
+      liquidity(-0.18 * s),
+      trustScar(0.12 * s),
+    ],
+    delayed: (s, year) => [
+      {
+        sourceId: "world_financial_crisis",
+        sourceType: "EVENT",
+        sourceLabel: "金融危機からの立て直り",
+        triggerYear: year + 3,
+        effects: [trust("marketTrust", 0.09 * s), trust("institutionalTrust", 0.05 * s), liquidity(0.12 * s)],
+      },
+    ],
   }),
   defineEvent({
     id: "world_supply_crisis",
@@ -671,7 +691,16 @@ const worldCrisisEvents: EventDefinition[] = [
     conflictTags: ["WORLD_DOWN"],
     text: "国際的な信用不安が広がっています",
     topics: ["信用"],
-    effects: (s) => [trust("institutionalTrust", -0.04 * s), trust("monetaryTrust", -0.03 * s)],
+    effects: (s) => [trust("institutionalTrust", -0.09 * s), trust("monetaryTrust", -0.07 * s)],
+    delayed: (s, year) => [
+      {
+        sourceId: "world_credit_unease",
+        sourceType: "EVENT",
+        sourceLabel: "信用不安の落ち着き",
+        triggerYear: year + 2,
+        effects: [trust("institutionalTrust", 0.05 * s), trust("monetaryTrust", 0.04 * s)],
+      },
+    ],
   }),
 ];
 

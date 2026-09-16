@@ -3,7 +3,9 @@
 
 export const simulationConfig = {
   price: {
-    sensitivity: 0.28,
+    // 0.28だと通常年の変動幅が中央値1.6%程度に収まり、あまり動いている実感がない
+    // というフィードバックがあったため引き上げた(§15の初期値は目安であり調整対象)。
+    sensitivity: 0.42,
     rangeByRegime: {
       NORMAL: { min: -0.35, max: 0.5 },
       SPECULATIVE: { min: -0.6, max: 1.2 },

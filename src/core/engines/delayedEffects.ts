@@ -55,7 +55,7 @@ export function matureDelayedEffects(state: GameState): DelayedEffectMaturationR
     if (!cancelled) {
       const modified = (de.modifyConditions ?? []).some((cond) => evaluateCondition(state, cond));
       drivers.push(...applyEffects(state, de.effects, state.currentYear));
-      matured.push({ sourceId: de.sourceId, sourceLabel: de.sourceLabel, createdYear: de.createdYear });
+      matured.push({ sourceId: de.sourceId, sourceLabel: de.sourceLabel, sourceType: de.sourceType, createdYear: de.createdYear });
       void modified; // modifyConditionsは将来の拡張余地として保持（初版では発火可否のみ判定）
     }
     // triggerYearに到達したものは適用可否に関わらずキューから除去する
