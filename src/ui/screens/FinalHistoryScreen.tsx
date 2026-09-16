@@ -18,6 +18,7 @@ export default function FinalHistoryScreen({ state, onReplaySameDesign, onNewCur
   const timeline = useMemo(() => extractTimeline(state), [state]);
   const c = state.currency;
   const trustAvg = (c.issuerTrust + c.technicalTrust + c.monetaryTrust + c.marketTrust + c.institutionalTrust) / 5;
+  const isDead = summary.finalLifecycle === "DEAD";
 
   return (
     <div className="screen screen-tight">
@@ -26,7 +27,14 @@ export default function FinalHistoryScreen({ state, onReplaySameDesign, onNewCur
         <span className="badge" style={{ marginTop: 10 }}>
           {summary.lifespanYears}年の歴史
         </span>
-        <h1 style={{ fontSize: 22 }}>{state.currencyDesign.name}の50年史</h1>
+        <h1 style={{ fontSize: 22 }}>
+          {isDead ? `${state.currencyDesign.name}は、ここで終わりました` : `${state.currencyDesign.name}の50年史`}
+        </h1>
+        {isDead && (
+          <p style={{ maxWidth: 320 }}>
+            {state.startYear + summary.lifespanYears}年、{state.currencyDesign.name}は誰にも使われなくなり、その歴史に幕を閉じました。
+          </p>
+        )}
         <div className="scroll-x-tags">
           {types.map((t) => (
             <span className="badge" key={t}>

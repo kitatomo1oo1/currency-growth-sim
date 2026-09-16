@@ -9,7 +9,9 @@ import CoinAvatar from "../components/CoinAvatar";
 interface Props {
   state: GameState;
   records: YearRecord[];
+  gameOver: boolean;
   onAdvance: (policyId: string) => void;
+  onFinish: () => void;
 }
 
 const BASKET_ITEMS: Array<{ label: string; homePrice: number }> = [
@@ -44,7 +46,7 @@ function describeYearBeat(r: YearRecord): { headline: string; sub?: string } {
   return { headline: "静かな1年でした" };
 }
 
-export default function TurnScreen({ state, records, onAdvance }: Props) {
+export default function TurnScreen({ state, records, gameOver, onAdvance, onFinish }: Props) {
   const [selectedPolicyId, setSelectedPolicyId] = useState("NO_ACTION");
   const [revealIndex, setRevealIndex] = useState(0);
   const choices = useMemo(() => getPolicyChoices(state), [state]);
@@ -122,6 +124,9 @@ export default function TurnScreen({ state, records, onAdvance }: Props) {
     r.maturedDelayedEffects.map((m) => ({ ...m, year: r.year }))
   );
 
+  const deadRisk = (state.flags["_deadRisk"] as number) ?? 0;
+  const showDeadWarning = !gameOver && deadRisk > 0.3;
+
   function handleAdvance() {
     onAdvance(selectedPolicyId);
   }
@@ -151,6 +156,14 @@ export default function TurnScreen({ state, records, onAdvance }: Props) {
           {priceChangePct >= 0 ? "↑" : "↓"} {Math.abs(priceChangePct).toFixed(1)}%{dramatic ? "　大きな変化がありました" : ""}
         </div>
       </div>
+
+      {showDeadWarning && (
+        <div className="danger-banner section">
+          {deadRisk > 0.7
+            ? "このままでは、この通貨は本当に使われなくなってしまいます。何か手を打たないと、歴史はここで終わります。"
+            : "利用者が減り続けています。このまま何もしなければ、いずれ誰にも使われなくなるかもしれません。"}
+        </div>
+      )}
 
       {maturedEffects.length > 0 && (
         <div className="card section" style={{ borderColor: "var(--accent-2)" }}>
@@ -266,25 +279,42 @@ export default function TurnScreen({ state, records, onAdvance }: Props) {
         </div>
       )}
 
-      <div className="section">
-        <h2>次の5年、どうする？</h2>
-        <div className="situation-banner">{describeSituation(state)}</div>
-        {choices.map((p) => (
-          <button
-            key={p.id}
-            className={`tap-card ${selectedPolicyId === p.id ? "selected" : ""}`}
-            onClick={() => setSelectedPolicyId(p.id)}
-          >
-            <span className="title">{p.label}</span>
-            <span className="desc">{p.description}</span>
-          </button>
-        ))}
-      </div>
+      {gameOver ? (
+        <div className="section center-col" style={{ textAlign: "center" }}>
+          <h2>{state.currency.lifecycle === "DEAD" ? "ここで、歴史が終わりました" : "50年の歴史が幕を閉じました"}</h2>
+          <p>
+            {state.currency.lifecycle === "DEAD"
+              ? `${state.currencyDesign.name}は、誰にも使われなくなりました。`
+              : `${state.currencyDesign.name}は、最後まで存続しました。`}
+          </p>
+        </div>
+      ) : (
+        <div className="section">
+          <h2>次の5年、どうする？</h2>
+          <div className="situation-banner">{describeSituation(state)}</div>
+          {choices.map((p) => (
+            <button
+              key={p.id}
+              className={`tap-card ${selectedPolicyId === p.id ? "selected" : ""}`}
+              onClick={() => setSelectedPolicyId(p.id)}
+            >
+              <span className="title">{p.label}</span>
+              <span className="desc">{p.description}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="bottom-bar" style={{ marginTop: "auto" }}>
-        <button className="btn btn-primary" onClick={handleAdvance}>
-          次の5年へ
-        </button>
+        {gameOver ? (
+          <button className="btn btn-primary" onClick={onFinish}>
+            50年史を見る
+          </button>
+        ) : (
+          <button className="btn btn-primary" onClick={handleAdvance}>
+            次の5年へ
+          </button>
+        )}
       </div>
     </div>
   );

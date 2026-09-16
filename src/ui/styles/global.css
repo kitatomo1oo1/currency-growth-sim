@@ -372,3 +372,14 @@ p {
   font-size: 14.5px;
   line-height: 1.6;
 }
+
+.danger-banner {
+  background: rgba(242, 120, 159, 0.1);
+  border: 1px solid var(--danger);
+  border-left: 4px solid var(--danger);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+}

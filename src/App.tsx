@@ -21,6 +21,7 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [lastRecords, setLastRecords] = useState<YearRecord[]>([]);
   const [canContinue, setCanContinue] = useState(false);
+  const [turnEnded, setTurnEnded] = useState(false);
 
   useEffect(() => {
     setCanContinue(hasContinuableGame());
@@ -53,7 +54,8 @@ export default function App() {
     const { state, yearRecords, gameOver } = advanceTurn(gameState, "NO_ACTION");
     setGameState({ ...state });
     setLastRecords(yearRecords);
-    setScreen(gameOver ? "final" : "turn");
+    setTurnEnded(gameOver);
+    setScreen("turn");
   }
 
   function handleAdvanceTurn(policyId: string) {
@@ -61,7 +63,12 @@ export default function App() {
     const { state, yearRecords, gameOver } = advanceTurn(gameState, policyId);
     setGameState({ ...state });
     setLastRecords(yearRecords);
-    setScreen(gameOver ? "final" : "turn");
+    setTurnEnded(gameOver);
+    setScreen("turn");
+  }
+
+  function handleFinish() {
+    setScreen("final");
   }
 
   function handleReplaySameDesignNewWorld() {
@@ -89,7 +96,7 @@ export default function App() {
       {screen === "create" && <CreateCurrencyScreen onComplete={handleCurrencyCreated} onBack={handleGoHome} />}
       {screen === "birth" && gameState && <BirthScreen state={gameState} onAdvance={handleFirstAdvance} />}
       {screen === "turn" && gameState && (
-        <TurnScreen state={gameState} records={lastRecords} onAdvance={handleAdvanceTurn} />
+        <TurnScreen state={gameState} records={lastRecords} gameOver={turnEnded} onAdvance={handleAdvanceTurn} onFinish={handleFinish} />
       )}
       {screen === "final" && gameState && (
         <FinalHistoryScreen
